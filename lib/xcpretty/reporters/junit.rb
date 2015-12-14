@@ -47,9 +47,20 @@ module XCPretty
     end
 
     def format_failing_test(classname, test_case, reason, file)
-      test_node = suite(classname).add_element('testcase')
-      test_node.attributes['classname'] = classname
-      test_node.attributes['name']      = test_case
+      suite_node = suite(classname)
+      test_node = nil
+      # Add failure to existing test node, if it exists
+      suite_node.each_element_with_attribute('classname', classname, 0, 'testcase') { |e|
+        if e.attributes['name'] == test_case
+          test_node = e
+          break
+        end
+      }
+      if test_node.nil?
+        test_node = suite_node.add_element('testcase')
+        test_node.attributes['classname'] = classname
+        test_node.attributes['name']      = test_case
+      end
       fail_node = test_node.add_element('failure')
       fail_node.attributes['message'] = reason
       fail_node.text = file.sub(@directory + '/', '')
